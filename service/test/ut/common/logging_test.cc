@@ -1,5 +1,5 @@
 /**
- * common/logging.cc - Common log interface
+ * ut/common/logging_test.cc - Common log interface unit tests
  * Copyright (c) 2021 cyw0ng<dev.cyw0ng@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,20 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+#include "gtest/gtest.h"
 
-#include "logging.hh"
-#include <iostream>
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv); 
+    return RUN_ALL_TESTS();
+}
 
-namespace np::common {
-    Logging::Logging() {
-        std::cout << "!" << std::endl;
-    }
+class TestForLoggingInterfaces : public ::testing::Test {
+};
 
-    Logging *Logging::getInstance() {
-        if (instance == nullptr) {
-            instance = new Logging;
-        }
+TEST(TestForLoggingInterfaces, Singleton) {
 
-        return instance;
-    }
 }

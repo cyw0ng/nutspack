@@ -1,0 +1,1 @@
+docker run -it -v `pwd`:/opt --rm nutspack-dev:latest /bin/bash -c "cmake .; make -j 16; ./runtest.sh"

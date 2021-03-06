@@ -1,0 +1,1 @@
+./service/output/bin/ut_test_common
