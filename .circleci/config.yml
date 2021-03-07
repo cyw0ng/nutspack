@@ -3,3 +3,13 @@ jobs:
   build:
     docker:
       - image: cyw0ng/nutspack-dev:latest
+    steps:
+      - checkout
+      - run:
+          name: "Build project"
+          command: |
+            ./build.sh
+      - run:
+          name: "Run test cases"
+          command: |
+            ./runtest.sh
