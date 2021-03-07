@@ -15,15 +15,33 @@
  * limitations under the License.
  **/
 #include "gtest/gtest.h"
+#include "common/logging.hh"
+#include <thread>
+#include <future>
 
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv); 
-    return RUN_ALL_TESTS();
+using Logging = np::common::Logging;
+
+int simplefunc(std::string a)
+{
+    return a.size();
 }
 
-class TestForLoggingInterfaces : public ::testing::Test {
+class TestForLoggingInterfaces : public ::testing::Test
+{
 };
 
-TEST(TestForLoggingInterfaces, Singleton) {
+TEST(TestForLoggingInterfaces, Singleton)
+{
+    EXPECT_EQ(Logging::getInstance(), Logging::getInstance());
 
+    auto future = std::async([]() -> Logging * {
+        return Logging::getInstance();
+    });
+    EXPECT_EQ(Logging::getInstance(), future.get());
+}
+
+int main(int argc, char **argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

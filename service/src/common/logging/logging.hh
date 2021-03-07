@@ -18,14 +18,20 @@
 #ifndef COMMON_LOGGING_
 #define COMMON_LOGGING_
 
-namespace np::common {
-    class Logging {
+namespace np::common
+{
+    class Logging
+    {
+    private:
         static Logging *instance;
         Logging();
+        ~Logging();
 
-        public:
-        static Logging *getInstance();  
+    public:
+        static Logging *getInstance();
     };
+
+    Logging *Logging::instance;
 }
 
 #endif

@@ -16,16 +16,28 @@
  **/
 
 #include "logging.hh"
+#include <syslog.h>
 #include <iostream>
 
-namespace np::common {
-    Logging::Logging() {
-        std::cout << "!" << std::endl;
+namespace np::common
+{
+    Logging::Logging()
+    {
+        openlog(nullptr, LOG_NDELAY | LOG_USER, LOG_LOCAL1);
+
+        syslog(LOG_INFO, "Logging interface started");
     }
 
-    Logging *Logging::getInstance() {
-        if (instance == nullptr) {
-            instance = new Logging;
+    Logging::~Logging()
+    {
+        closelog();
+    }
+
+    Logging *Logging::getInstance()
+    {
+        if (instance == nullptr)
+        {
+            instance = new Logging();
         }
 
         return instance;
