@@ -6,6 +6,12 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install Testspace client
+          command: |
+            apt-get install curl -y
+            curl -fsSL https://testspace-client.s3.amazonaws.com/testspace-linux.tgz | tar -zxvf- -C /usr/local/bin
+            testspace config url cyw0ng.testspace.com
+      - run:
           name: "Build project"
           command: |
             ./build.sh
@@ -14,13 +20,7 @@ jobs:
           command: |
             ./runtest.sh
       - run:
-          name: Install Testspace client
-          command: |
-            apt-get install curl -y
-            curl -fsSL https://testspace-client.s3.amazonaws.com/testspace-linux.tgz | tar -zxvf- -C /usr/local/bin
-            testspace config url cyw0ng.testspace.com
-      - run:
           name: Publish results to Testspace server
           command: |
-            testspace .test/*.xml
+            testspace .test/*.xml v0.1.0
           when: always
