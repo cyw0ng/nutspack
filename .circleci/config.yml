@@ -13,3 +13,14 @@ jobs:
           name: "Run test cases"
           command: |
             ./runtest.sh
+      - run:
+          name: Install Testspace client
+          command: |
+            apt-get install curl -y
+            curl -fsSL https://testspace-client.s3.amazonaws.com/testspace-linux.tgz | tar -zxvf- -C /usr/local/bin
+            testspace config url cyw0ng.testspace.com
+      - run:
+          name: Publish results to Testspace server
+          command: |
+            testspace .test/*.xml
+          when: always
