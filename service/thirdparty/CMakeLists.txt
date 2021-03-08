@@ -1,5 +1,5 @@
 execute_process (
-    COMMAND bash -c "CC=clang-10 CXX=clang++-10 cmake -DBUILD_SHARED_LIBS=ON .; make -j $NPROC"
+    COMMAND bash -c "CC=clang-11 CXX=clang++-11 cmake -DBUILD_SHARED_LIBS=ON .; make -j $NPROC"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/googletest
 )
 
