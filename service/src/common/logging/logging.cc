@@ -18,6 +18,7 @@
 #include "logging.hh"
 #include <syslog.h>
 #include <iostream>
+#include <cstdarg>
 
 namespace np::common
 {
@@ -41,5 +42,13 @@ namespace np::common
         }
 
         return instance;
+    }
+
+    void Logging::Log(LogLevel level, const char *fmt, ...)
+    {
+        va_list args;
+        va_start(args, fmt);
+        vsyslog(LOG_LOCAL1 | (int)level, fmt, args);
+        va_end(args);
     }
 }

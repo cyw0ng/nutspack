@@ -18,8 +18,22 @@
 #ifndef COMMON_LOGGING_
 #define COMMON_LOGGING_
 
+#include <string>
+
 namespace np::common
 {
+    enum class LogLevel : int
+    {
+        EMERG,
+        ALERT,
+        CRIT,
+        ERR,
+        WARNING,
+        NOTICE,
+        INFO,
+        DEBUG
+    };
+
     class Logging
     {
     private:
@@ -29,6 +43,7 @@ namespace np::common
 
     public:
         static Logging *getInstance();
+        void Log(LogLevel, const char *, ...);
     };
 
     Logging *Logging::instance;
