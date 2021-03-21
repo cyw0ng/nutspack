@@ -4,6 +4,8 @@ RUN sed -i "s@http://.*archive.ubuntu.com@http://repo.huaweicloud.com@g" /etc/ap
     sed -i "s@http://.*security.ubuntu.com@http://repo.huaweicloud.com@g" /etc/apt/sources.list
 
 RUN apt-get update && \
-    apt-get install clang-11 clang++-11 clang-tidy cmake gdb rsyslog git -y
+    apt-get install --no-install-recommends \
+        clang-11 clang++-11 clang-tidy cmake gdb rsyslog git nodejs npm \
+        libgrpc++1 libgrpc10 protobuf-compiler protobuf-compiler-grpc libgrpc++-dev libgrpc-dev -y
 
 WORKDIR /opt
