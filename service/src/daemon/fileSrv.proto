@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package daemon;
+
+service FileSrv {
+    rpc Ping (HeartbeatSequence) returns (HeartbeatSequence) {}
+}
+
+message HeartbeatSequence {
+    int64 id = 1;
+}
