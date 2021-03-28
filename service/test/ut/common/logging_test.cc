@@ -15,7 +15,7 @@
  * limitations under the License.
  **/
 #include "gtest/gtest.h"
-#include "common/logging.hh"
+#include "common/logging/logging.hh"
 #include <thread>
 #include <future>
 #include <random>
@@ -42,9 +42,17 @@ void flushRsyslogd()
 
 class TestForLoggingInterfaces : public ::testing::Test
 {
+    void SetUp() {
+        srand(time(0));
+        cleanLogFile();
+    }
+
+    void TearDown() {
+        cleanLogFile();
+    }
 };
 
-TEST(TestForLoggingInterfaces, Singleton)
+TEST_F(TestForLoggingInterfaces, Singleton)
 {
     EXPECT_EQ(Logging::getInstance(), Logging::getInstance());
 
@@ -54,10 +62,9 @@ TEST(TestForLoggingInterfaces, Singleton)
     EXPECT_EQ(Logging::getInstance(), future.get());
 }
 
-TEST(TestForLoggingInterfaces, Feature)
+TEST_F(TestForLoggingInterfaces, Feature)
 {
     cleanLogFile();
-    srand(time(0));
     std::ostringstream tagOStr;
     tagOStr << rand() << "-" << rand() << "-" << rand();
     std::string tagStr = tagOStr.str();
@@ -89,7 +96,7 @@ TEST(TestForLoggingInterfaces, Feature)
     ASSERT_EQ(lineCount, 8);
 }
 
-TEST(TestForLoggingInterfaces, MTStressing)
+TEST_F(TestForLoggingInterfaces, MTStressing)
 {
     cleanLogFile();
 
@@ -132,10 +139,4 @@ TEST(TestForLoggingInterfaces, MTStressing)
     }
 
     ASSERT_EQ(lineCount, scale * scale);
-}
-
-int main(int argc, char **argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

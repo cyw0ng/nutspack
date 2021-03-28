@@ -20,6 +20,18 @@
 
 #include <string>
 
+#define logE(fmt, ...) do { \
+    np::common::Logging::getInstance()->Log(np::common::LogLevel::ERR, fmt, __VA_ARGS__); \
+} while(0); \
+
+#define logD(fmt, ...) do { \
+    np::common::Logging::getInstance()->Log(np::common::LogLevel::DEBUG, fmt, __VA_ARGS__); \
+} while(0); \
+
+#define logI(fmt, ...) do { \
+    np::common::Logging::getInstance()->Log(np::common::LogLevel::INFO, fmt, __VA_ARGS__); \
+} while(0); \
+
 namespace np::common
 {
     enum class LogLevel : int
