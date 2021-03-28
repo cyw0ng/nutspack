@@ -1,0 +1,1 @@
+file(COPY Errno.hh DESTINATION ${NP_HEADERS_OUTPUT_DIRECTORY}/common/errno)
