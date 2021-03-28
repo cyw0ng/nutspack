@@ -19,11 +19,16 @@
 #include <ctime>
 #include <string>
 #include <iostream>
+#include <queue>
 #include <sqlite3.h>
 #include "common/database/database.hh"
 
 using SqliteDB = np::common::SqliteDB;
+using SqlitePara = np::common::SqlitePara;
+using SqliteBindType = np::common::SqliteBindType;
 using Errno = np::Errno;
+
+bool g_foundRecord = false;
 
 class TestForDatabaseInterfaces : public ::testing::Test
 {
@@ -109,6 +114,7 @@ TEST_F(TestForDatabaseInterfaces, BasicQuery)
     const char *dropTableStmt = "DROP TABLE contacts;";
     const char *insertStmt = "INSERT INTO contacts VALUES (0, 'John', '1732');";
     const char *selectStmt = "SELECT * FROM contacts;";
+    const char *paraSelectStmt = "SELECT * FROM contacts WHERE id = ? AND name = ?";
 
     // Try to create a table with same name
     EXPECT_EQ(sqliteDB.Exec(createTableStmt, nullptr, sqliteErr), Errno::E_SUCCESS);
@@ -123,8 +129,13 @@ TEST_F(TestForDatabaseInterfaces, BasicQuery)
     EXPECT_EQ(sqliteDB.Exec(insertStmt, nullptr, sqliteErr), Errno::E_SUCCESS);
     EXPECT_EQ(sqliteDB.Exec(insertStmt, nullptr, sqliteErr), Errno::E_DBOBJ_SQLITERR);
     EXPECT_EQ(sqliteErr, SQLITE_CONSTRAINT);
+
+    // Try to query for data inserted
+    g_foundRecord = false;
     EXPECT_EQ(sqliteDB.Exec(
                   selectStmt, [](void *ctx, int argc, char **argv, char **columnName) -> int {
+                      g_foundRecord = true;
+
                       EXPECT_EQ(argc, 3);
                       EXPECT_STREQ(columnName[0], "id");
                       EXPECT_STREQ(argv[0], "0");
@@ -136,6 +147,38 @@ TEST_F(TestForDatabaseInterfaces, BasicQuery)
                   },
                   sqliteErr),
               Errno::E_SUCCESS);
+    EXPECT_EQ(g_foundRecord, true);
+
+    // Try to query with paras
+    std::queue<SqlitePara *> paras;
+
+    int targetQueryID = 0;
+    SqlitePara *pPara1 = new SqlitePara(SqliteBindType::SQLITE3_BIND_INT, &targetQueryID, nullptr, nullptr);
+    paras.push(pPara1);
+
+    const char *targetQueryName = "John";
+    int targetQueryNameMaxLength = -1;
+    SqlitePara *pPara2 = new SqlitePara(SqliteBindType::SQLITE3_BIND_TEXT, &targetQueryName, &targetQueryNameMaxLength, nullptr);
+    paras.push(pPara2);
+
+    g_foundRecord = false;
+    EXPECT_EQ(sqliteDB.Exec(
+                  paraSelectStmt, paras,[](void *ctx, int argc, char **argv, char **columnName) -> int {
+                      g_foundRecord = true;
+
+                      EXPECT_EQ(argc, 3);
+                      EXPECT_STREQ(columnName[0], "id");
+                      EXPECT_STREQ(argv[0], "0");
+                      EXPECT_STREQ(columnName[1], "name");
+                      EXPECT_STREQ(argv[1], "John");
+                      EXPECT_STREQ(columnName[2], "phone");
+                      EXPECT_STREQ(argv[2], "1732");
+                      return 0;
+                  },
+                  sqliteErr),
+              Errno::E_SUCCESS);
+    delete pPara1;
+    delete pPara2;
 
     // Try to close the db object
     EXPECT_EQ(sqliteDB.Vacuum(sqliteErr), Errno::E_SUCCESS);

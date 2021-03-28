@@ -20,11 +20,13 @@
 
 namespace np
 {
-    enum class ErrFamily : int {
+    enum class ErrFamily : int
+    {
         COMMON_DATABASE = 0x1 << 3,
     };
 
-    enum class Errno : int {
+    enum class Errno : int
+    {
         /**
          * Generic success
          */
@@ -53,7 +55,12 @@ namespace np
         /**
          * Database object is not initialized
          */
-        E_DBOBJ_NOTINIT = 0x5 | (int)ErrFamily::COMMON_DATABASE
+        E_DBOBJ_NOTINIT = 0x5 | (int)ErrFamily::COMMON_DATABASE,
+
+        /**
+         * Sqlite3 bind target type is not support
+         */
+        E_DBBIND_TYPENOTSUPPORT = 0x6 | (int)ErrFamily::COMMON_DATABASE
     };
 }
 

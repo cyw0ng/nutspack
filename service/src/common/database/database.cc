@@ -121,7 +121,7 @@ namespace np::common
 
             sqliteErr = sqlite3_exec(this->dbHandle, sql.c_str(), callback, 0, &zErrMsg);
 
-            if (sqliteErr == 0)
+            if (sqliteErr == SQLITE_OK)
             {
                 return Errno::E_SUCCESS;
             }
@@ -138,13 +138,96 @@ namespace np::common
     }
 
     /**
+     * Execute parameterized SQL statements with callback
+     * 
+     * @return {E_SUCCESS} if statement is successfully executed
+     * @return {E_DBOBJ_SQLITERR} if sqlite3_prepare_v2 returns an error
+     * @return {E_DBOBJ_NOTINIT} if target db obj is not init
+     */
+    Errno SqliteDB::Exec(std::string sql, std::queue<SqlitePara *> paras, sqlite3Callback sqlite3Callback, int &sqliteErr)
+    {
+        if (isInit)
+        {
+            sqlite3_stmt *pStmt;
+
+            sqliteErr = sqlite3_prepare_v2(this->dbHandle, sql.c_str(), -1, &pStmt, nullptr);
+
+            if (sqliteErr == SQLITE_OK)
+            {
+                int currentPos = 1;
+                while (paras.size() != 0)
+                {
+                    SqlitePara *para = paras.front();
+
+                    (void)para->BindToStmt(&pStmt, currentPos, sqliteErr);
+                    paras.pop();
+                    if (sqliteErr != SQLITE_OK)
+                    {
+                        return Errno::E_DBOBJ_SQLITERR;
+                    }
+
+                    currentPos++;
+                }
+                const char *generatedSql = sqlite3_expanded_sql(pStmt);
+                std::string generatedSqlString{generatedSql};
+                return Exec(generatedSqlString, sqlite3Callback, sqliteErr);
+            }
+            return Errno::E_DBOBJ_SQLITERR;
+        }
+
+        return Errno::E_DBOBJ_NOTINIT;
+    }
+
+    /**
      * Execute VACUUM statement on current db handle
      * 
      * @return {E_SUCCESS} if statement is successfully executed
      * @return {E_DBOBJ_SQLITERR} if sqlite3_exec returns an error
      * @return {E_DBOBJ_NOTINIT} if target db obj is not init
      */
-    Errno SqliteDB::Vacuum(int &sqliteErr) {
+    Errno SqliteDB::Vacuum(int &sqliteErr)
+    {
         return this->Exec("VACUUM;", nullptr, sqliteErr);
+    }
+
+    /**
+     * Bind parameter to sqlite3 stmt
+     * 
+     * @return {E_SUCCESS} if statement is successfully executed
+     * @return {E_DBOBJ_SQLITERR} if sqlite3_exec returns an error
+     * @return {E_DBBIND_TYPENOTSUPPORT} if such sqlite bind type is not support
+     * 
+     * TBD: too ugly, refactor later
+     */
+    Errno SqlitePara::BindToStmt(sqlite3_stmt **ppStmt, int postion, int &sqliteErr)
+    {
+        switch (this->bindType)
+        {
+        case SqliteBindType::SQLITE3_BIND_INT:
+            sqliteErr = sqlite3_bind_int(*ppStmt, postion, *(int *)pBindParam1);
+            break;
+        case SqliteBindType::SQLITE3_BIND_NULL:
+            sqliteErr = sqlite3_bind_null(*ppStmt, postion);
+            break;
+        case SqliteBindType::SQLITE3_BIND_TEXT:
+            if (pBindParam3 == nullptr)
+            {
+                sqliteErr = sqlite3_bind_text(*ppStmt, postion, *(const char **)pBindParam1, *(int *)pBindParam2, nullptr);
+            }
+            else
+            {
+                sqliteErr = sqlite3_bind_text(*ppStmt, postion, *(const char **)pBindParam1, *(int *)pBindParam2, *(sqliteBindTextCallback *)pBindParam3);
+            }
+            break;
+        default:
+            return Errno::E_DBBIND_TYPENOTSUPPORT;
+        }
+
+        if (sqliteErr == SQLITE_OK)
+        {
+            return Errno::E_SUCCESS;
+        }
+
+        return Errno::E_DBOBJ_SQLITERR;
     }
 }
