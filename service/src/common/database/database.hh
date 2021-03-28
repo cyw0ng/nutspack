@@ -24,6 +24,8 @@
 
 using np::Errno;
 
+typedef int (*sqlite3Callback)(void*,int,char**,char**);
+
 namespace np::common
 {
     class SqliteDB
@@ -31,6 +33,9 @@ namespace np::common
     public:
         Errno Init(std::string dbFile, int flags, int &sqliteErr);
         Errno Destroy(int &sqliteErr);
+        Errno Exec(std::string sql, sqlite3Callback callback, int &sqliteErr);
+        Errno Vacuum(int &sqliteErr);
+
     private:
         bool isInit {false};
         std::string dbFile;

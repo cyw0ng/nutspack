@@ -48,7 +48,7 @@ namespace np
         /**
          * Generic Sqlite reported internal error
          */
-        E_DBOOJ_SQLITERR = 0x4 | (int)ErrFamily::COMMON_DATABASE,
+        E_DBOBJ_SQLITERR = 0x4 | (int)ErrFamily::COMMON_DATABASE,
 
         /**
          * Database object is not initialized

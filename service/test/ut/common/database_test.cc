@@ -31,16 +31,18 @@ public:
     std::string testRoot;
 
 private:
-    void SetUp() {
+    void SetUp()
+    {
         srand(time(NULL));
-        testRoot = "/tmp/testroot-" + std::to_string(rand());
+        testRoot = "/tmp/testroot-" + std::to_string(rand()) + "/";
         std::cout << "Using testroot: " + testRoot << std::endl;
 
         system(("mkdir " + testRoot).c_str());
     }
 
-    void TearDown() {
-        // system(("rm -rf " + testRoot).c_str());
+    void TearDown()
+    {
+        system(("rm -rf " + testRoot).c_str());
     }
 };
 
@@ -55,8 +57,16 @@ TEST_F(TestForDatabaseInterfaces, CommonOpenClose)
     SqliteDB sqliteDB;
     Errno npErr;
 
+    // Try to close the db object before init
+    EXPECT_EQ(sqliteDB.Destroy(sqliteErr), Errno::E_DBOBJ_NOTINIT);
+
+    // Try to execute sql query before init
+    EXPECT_EQ(sqliteDB.Vacuum(sqliteErr), Errno::E_DBOBJ_NOTINIT);
+
     // Try to open a db object
     EXPECT_EQ(sqliteDB.Init(testRoot + "test.db", SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, sqliteErr), Errno::E_SUCCESS);
+    EXPECT_EQ(sqliteDB.Vacuum(sqliteErr), Errno::E_SUCCESS);
+    EXPECT_EQ(sqliteErr, SQLITE_OK);
 
     // Try to open the same db object
     EXPECT_EQ(sqliteDB.Init(testRoot + "/../../" + testRoot + "test.db", SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, sqliteErr), Errno::E_SUCCESS);
@@ -70,4 +80,65 @@ TEST_F(TestForDatabaseInterfaces, CommonOpenClose)
     // Try to close the db object multiple times
     EXPECT_EQ(sqliteDB.Destroy(sqliteErr), Errno::E_SUCCESS);
     EXPECT_EQ(sqliteDB.Destroy(sqliteErr), Errno::E_DBOBJ_NOTINIT);
+
+    // Try to execute sql query after init
+    EXPECT_EQ(sqliteDB.Vacuum(sqliteErr), Errno::E_DBOBJ_NOTINIT);
+}
+
+/**
+ * TestForDatabaseInterfaces.BasicQuery
+ * 
+ * @test sqliteDB basic query tests
+ */
+TEST_F(TestForDatabaseInterfaces, BasicQuery)
+{
+    int sqliteErr = 0;
+    SqliteDB sqliteDB;
+    Errno npErr;
+
+    // Try to open a db object
+    EXPECT_EQ(sqliteDB.Init(testRoot + "test.db", SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, sqliteErr), Errno::E_SUCCESS);
+    EXPECT_EQ(sqliteErr, SQLITE_OK);
+
+    // Try yo create table
+    const char *createTableStmt = "CREATE TABLE contacts ("
+                                  "id INTEGER PRIMARY KEY,"
+                                  "name TEXT NOT NULL,"
+                                  "phone TEXT NOT NULL UNIQUE"
+                                  ");";
+    const char *dropTableStmt = "DROP TABLE contacts;";
+    const char *insertStmt = "INSERT INTO contacts VALUES (0, 'John', '1732');";
+    const char *selectStmt = "SELECT * FROM contacts;";
+
+    // Try to create a table with same name
+    EXPECT_EQ(sqliteDB.Exec(createTableStmt, nullptr, sqliteErr), Errno::E_SUCCESS);
+    EXPECT_EQ(sqliteDB.Exec(createTableStmt, nullptr, sqliteErr), Errno::E_DBOBJ_SQLITERR);
+    EXPECT_EQ(sqliteErr, SQLITE_ERROR);
+
+    // Try to drop and re-create a table
+    EXPECT_EQ(sqliteDB.Exec(dropTableStmt, nullptr, sqliteErr), Errno::E_SUCCESS);
+    EXPECT_EQ(sqliteDB.Exec(createTableStmt, nullptr, sqliteErr), Errno::E_SUCCESS);
+
+    // Try to insert data
+    EXPECT_EQ(sqliteDB.Exec(insertStmt, nullptr, sqliteErr), Errno::E_SUCCESS);
+    EXPECT_EQ(sqliteDB.Exec(insertStmt, nullptr, sqliteErr), Errno::E_DBOBJ_SQLITERR);
+    EXPECT_EQ(sqliteErr, SQLITE_CONSTRAINT);
+    EXPECT_EQ(sqliteDB.Exec(
+                  selectStmt, [](void *ctx, int argc, char **argv, char **columnName) -> int {
+                      EXPECT_EQ(argc, 3);
+                      EXPECT_STREQ(columnName[0], "id");
+                      EXPECT_STREQ(argv[0], "0");
+                      EXPECT_STREQ(columnName[1], "name");
+                      EXPECT_STREQ(argv[1], "John");
+                      EXPECT_STREQ(columnName[2], "phone");
+                      EXPECT_STREQ(argv[2], "1732");
+                      return 0;
+                  },
+                  sqliteErr),
+              Errno::E_SUCCESS);
+
+    // Try to close the db object
+    EXPECT_EQ(sqliteDB.Vacuum(sqliteErr), Errno::E_SUCCESS);
+    EXPECT_EQ(sqliteDB.Destroy(sqliteErr), Errno::E_SUCCESS);
+    EXPECT_EQ(sqliteDB.Exec(dropTableStmt, nullptr, sqliteErr), Errno::E_DBOBJ_NOTINIT);
 }

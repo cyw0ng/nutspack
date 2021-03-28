@@ -33,7 +33,7 @@ namespace np::common
      * @return {E_SUCCESS} if db is successfully created
      * @return {E_DBOBJ_DIFFPATH} if db object is init with another path
      * @return {E_DBOOJ_DIFFFLAG} if db object is init with different flags
-     * @return {E_DBOOJ_SQLITERR} if sqlite3_open_v2 returns an error 
+     * @return {E_DBOBJ_SQLITERR} if sqlite3_open_v2 returns an error
      */
     Errno SqliteDB::Init(std::string dbFile, int flags, int &sqliteErr)
     {
@@ -74,7 +74,7 @@ namespace np::common
         }
         else
         {
-            return Errno::E_DBOOJ_SQLITERR;
+            return Errno::E_DBOBJ_SQLITERR;
         }
     }
 
@@ -82,7 +82,8 @@ namespace np::common
      * Init SqliteDB object based on dbFile and flags
      * 
      * @return {E_SUCCESS} if db is successfully destroyed
-     * @return {E_DBOOJ_SQLITERR} if sqlite3_close_v2 returns an error 
+     * @return {E_DBOBJ_SQLITERR} if sqlite3_close_v2 returns an error 
+     * @return {E_DBOBJ_NOTINIT} if target db obj is not init
      */
     Errno SqliteDB::Destroy(int &sqliteErr)
     {
@@ -99,9 +100,51 @@ namespace np::common
 
                 return Errno::E_SUCCESS;
             }
-            return Errno::E_DBOOJ_SQLITERR;
+            return Errno::E_DBOBJ_SQLITERR;
         }
 
         return Errno::E_DBOBJ_NOTINIT;
+    }
+
+    /**
+     * Execute simple SQL statements with callback
+     * 
+     * @return {E_SUCCESS} if statement is successfully executed
+     * @return {E_DBOBJ_SQLITERR} if sqlite3_exec returns an error
+     * @return {E_DBOBJ_NOTINIT} if target db obj is not init
+     */
+    Errno SqliteDB::Exec(std::string sql, sqlite3Callback callback, int &sqliteErr)
+    {
+        if (isInit)
+        {
+            char *zErrMsg = nullptr;
+
+            sqliteErr = sqlite3_exec(this->dbHandle, sql.c_str(), callback, 0, &zErrMsg);
+
+            if (sqliteErr == 0)
+            {
+                return Errno::E_SUCCESS;
+            }
+            else
+            {
+                logE("sqlite execute error with: %s", zErrMsg);
+                sqlite3_free(zErrMsg);
+
+                return Errno::E_DBOBJ_SQLITERR;
+            }
+        }
+
+        return Errno::E_DBOBJ_NOTINIT;
+    }
+
+    /**
+     * Execute VACUUM statement on current db handle
+     * 
+     * @return {E_SUCCESS} if statement is successfully executed
+     * @return {E_DBOBJ_SQLITERR} if sqlite3_exec returns an error
+     * @return {E_DBOBJ_NOTINIT} if target db obj is not init
+     */
+    Errno SqliteDB::Vacuum(int &sqliteErr) {
+        return this->Exec("VACUUM;", nullptr, sqliteErr);
     }
 }
