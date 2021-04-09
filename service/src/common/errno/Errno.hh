@@ -23,6 +23,7 @@ namespace np
     enum class ErrFamily : int
     {
         COMMON_DATABASE = 0x1 << 3,
+        COMMOM_SRV = 0x2 << 3,
     };
 
     enum class Errno : int
@@ -60,7 +61,12 @@ namespace np
         /**
          * Sqlite3 bind target type is not support
          */
-        E_DBBIND_TYPENOTSUPPORT = 0x6 | (int)ErrFamily::COMMON_DATABASE
+        E_DBBIND_TYPENOTSUPPORT = 0x6 | (int)ErrFamily::COMMON_DATABASE,
+
+        /**
+         * Service is already init
+         */
+        E_SRV_ALREADYINIT = 0x1 | (int)ErrFamily::COMMOM_SRV,
     };
 }
 

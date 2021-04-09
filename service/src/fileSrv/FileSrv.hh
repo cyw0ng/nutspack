@@ -15,6 +15,7 @@
  * limitations under the License.
  **/
 #include "common/srv/Srv.hh"
+#include "common/errno/Errno.hh"
 #include <string>
 
 namespace np
@@ -22,14 +23,14 @@ namespace np
     class FileSrv : np::Srv
     {
     public:
-        bool init();
+        Errno Init();
         std::string getSrvName() { return this->srvName; }
         int getSrvVersion() { return this->srvVersion; }
 
     private:
         bool isInit{false};
-        std::string srvName{"FIleSrv"};
+        std::string srvName{"FileSrv"};
         int srvVersion{1};
-        bool initDB();
+        Errno initDB();
     };
 }

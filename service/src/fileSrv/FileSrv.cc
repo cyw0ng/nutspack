@@ -15,16 +15,30 @@
  * limitations under the License.
  **/
 #include "FileSrv.hh"
+#include "common/errno/Errno.hh"
+
+using np::Errno;
 
 namespace np
 {
-    bool FileSrv::init() {
+    /**
+     * Init fileSrv
+     * 
+     * @return {E_SUCCESS} if fileSrv is successfully init
+     * @return {E_SRV_ALREADYINIT} if fileSrv is already init
+     */
+    Errno FileSrv::Init() {
         if (this->isInit) {
-            return true;
+            return Errno::E_SRV_ALREADYINIT;
         }
     }
 
-    bool FileSrv::initDB() {
+    /**
+     * Init database for fileSrv
+     * 
+     * @return {E_SUCCESS} if fileSrv database schema created
+     */
+    Errno FileSrv::initDB() {
         
     }
 }
