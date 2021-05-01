@@ -1,5 +1,5 @@
 /**
- * common/logging.cc - Common log interface
+ * common/foundation.hh - Sevice Framework Foundation
  * Copyright (c) 2021 cyw0ng<dev.cyw0ng@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,17 +15,30 @@
  * limitations under the License.
  **/
 
-#include <string>
-#include <iostream>
+#ifndef COMMON_FOUNDATION_
+#define COMMON_FOUNDATION_
 
-namespace np::daemon
+#include <mutex>
+#include <memory>
+#include "common/errno/Errno.hh"
+
+namespace np::common
 {
-    void entry()
+    /**
+     * MsgBroker - Central message broker
+     */
+    class MsgBroker
     {
-    }
-} // namespace np::daemon
+    private:
+        MsgBroker *msgBroker;
+        MsgBroker() {};
+        bool isInit = false;
+        std::mutex mtx;
 
-int main(int argc, char *argv[], char *envp[])
-{
-    np::daemon::entry();
+    public:
+        std::shared_ptr<MsgBroker *> getInstance();
+        Errno Init();
+    };
 }
+
+#endif
